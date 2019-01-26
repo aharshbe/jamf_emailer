@@ -76,7 +76,8 @@ class App extends Component {
     this.state = {
         items: [],
         selected: [],
-        compareData : []
+        compareData : [],
+        removed : []
     };
     let dataSent = []
     let len = 0
@@ -111,16 +112,22 @@ class App extends Component {
      */
     id2List = {
         droppable: 'items',
-        droppable2: 'selected'
+        droppable2: 'selected',
+        removed: ''
     };
 
     getList = id => this.state[this.id2List[id]];
 
     onDragEnd = result => {
+
         const { source, destination } = result;
+
 
         // dropped outside the list
         if (!destination) {
+            this.trashit(this.getList(source.droppableId),
+            this.getList(source.droppableId)[source.index].id,
+            source, "removed", source.droppableId)
             return;
         }
         if (source.droppableId === destination.droppableId) {
@@ -135,6 +142,7 @@ class App extends Component {
             if (source.droppableId === 'droppable2') {
                 state = { selected: items };
             }
+
             this.setState(state);
         } else {
             const result = move(
@@ -148,7 +156,8 @@ class App extends Component {
             this.getList(source.droppableId)[source.index].serialNumber)
             this.setState({
                 items: result.droppable,
-                selected: result.droppable2
+                selected: result.droppable2,
+                removed: result.droppable3,
             });
         }
     };
@@ -165,16 +174,31 @@ class App extends Component {
       } else {
         console.log("Cancelled");
       }
-
     }
+    trashit(list, id, source, destination, droppableId){
+      console.log(list);
+      var r = window.confirm('Want to trash it?')
+      if (r){const result = move(
+          this.getList(source.droppableId),
+          this.getList(destination.droppableId),
+          source,
+          destination
+      );
+      this.setState({
+          items: result.droppable,
+          selected: result.droppable2,
+          selected2: result.droppable3,
+      });
+        console.log("trashed "+id);
+      } else {
+        console.log("Cancelled");
+      }
 
-    ruleout(){
-      console.log("Clicked rule out");
     }
     // Normally you would want to split things out into separate components.
     // But in this example everything is just done in one place for simplicity
     render() {
-
+        var url = "https://gear.githubapp.com/users/"
         return (
             <DragDropContext onDragEnd={this.onDragEnd}>
                 <Droppable droppableId="droppable">
@@ -196,7 +220,7 @@ class App extends Component {
                                                 snapshot.isDragging,
                                                 provided.draggableProps.style
                                             )}>
-                                            {item.content}
+                                            <a href={url+item.handle} target="_blank" rel="noopener noreferrer">{item.content}</a>
                                         </div>
                                     )}
                                 </Draggable>
@@ -224,7 +248,7 @@ class App extends Component {
                                                 snapshot.isDragging,
                                                 provided.draggableProps.style
                                             )}>
-                                            {item.content}
+                                            {item.serialNumber}
                                         </div>
                                     )}
                                 </Draggable>
