@@ -81,7 +81,8 @@ class App extends Component {
         count: 0,
         countList: 127,
         countList2: 0,
-        countEamiled: 0
+        countEamiled: 0,
+        userMultipls: []
     };
     let dataSent = []
     let len = 0
@@ -94,10 +95,11 @@ class App extends Component {
     .then(
       res => res.json())
     .then(resData => {
+
+
       //delete resData["Total_Not_In_Jamf"][1]["Total_Number_Not_In_Jamf"]
       // test
       resData["Total_Not_In_Jamf"][1]["Total_Number_Not_In_Jamf"] = "aharshbe"
-
       len = resData["Total_Not_In_Jamf"][0]
       dataSent = resData["Total_Not_In_Jamf"][1]
       console.log(len);
