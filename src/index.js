@@ -13,7 +13,7 @@ headers.set('Authorization', 'Basic ' + Buffer.from(username + ":" + password).t
 
 const getItems = (count, offset = 0, data, keys) =>
     Array.from({ length: count }, (v, k) => k).map(k => ({
-        id: `item-${k + data[k]}`,
+        id: `${offset[data[k]]}-${data[k]}`,
         content: `${offset[data[k]]}:` + ` ${data[k]}`,
         email: `${offset[data[k]]}@github.com`,
         handle: offset[data[k]],
@@ -57,14 +57,14 @@ const getItemStyle = (isDragging, draggableStyle) => ({
     margin: `0 0 ${grid}px 0`,
 
     // change background colour if dragging
-    background: isDragging ? 'lightgreen' : 'grey',
+    background: isDragging ? 'lightgreen' : 'white',
 
     // styles we need to apply on draggables
     ...draggableStyle
 });
 
 const getListStyle = isDraggingOver => ({
-    background: isDraggingOver ? 'lightblue' : 'lightgrey',
+    background: isDraggingOver ? 'lightblue' : 'orange',
     padding: grid,
     width: 250
 });
@@ -77,7 +77,11 @@ class App extends Component {
         items: [],
         selected: [],
         compareData : [],
-        removed : []
+        removed : [],
+        count: 0,
+        countList: 127,
+        countList2: 0,
+        countEamiled: 0
     };
     let dataSent = []
     let len = 0
@@ -101,6 +105,7 @@ class App extends Component {
 
       keys = Object.keys(dataSent)
       this.setState({items : getItems(len, dataSent, keys)})
+      this.setState({count : len})
 
     })
   }
@@ -136,7 +141,6 @@ class App extends Component {
                 source.index,
                 destination.index
             );
-
             let state = { items };
 
             if (source.droppableId === 'droppable2') {
@@ -145,6 +149,14 @@ class App extends Component {
 
             this.setState(state);
         } else {
+            console.log(source.droppableId);
+            if (source.droppableId === "droppable"){
+              this.setState({countList : this.getList(source.droppableId).length - 1})
+              this.setState({countList2 : this.getList("droppable2").length + 1})
+            } else {
+              this.setState({countList2 : this.getList(source.droppableId).length - 1})
+              this.setState({countList : this.getList("droppable").length + 1})
+            }
             const result = move(
                 this.getList(source.droppableId),
                 this.getList(destination.droppableId),
@@ -157,20 +169,22 @@ class App extends Component {
             this.setState({
                 items: result.droppable,
                 selected: result.droppable2,
-                removed: result.droppable3,
             });
         }
     };
 
 
     email(handle, email, serial){
-      console.log("Clicked email");
+      console.log("Clicked email")
       var r = window.confirm('Want to email this person?')
       if (r){
         var s = handle + " " + email + " " + serial
         console.log(s);
         fetch(`http://localhost:3000/emailer`, { method: "POST", headers: headers, body : s })
         console.log("emailed "+email);
+        var emailCountTemp = this.state.countEamiled
+        emailCountTemp += 1
+        this.setState({countEamiled : emailCountTemp})
       } else {
         console.log("Cancelled");
       }
@@ -187,7 +201,6 @@ class App extends Component {
       this.setState({
           items: result.droppable,
           selected: result.droppable2,
-          selected2: result.droppable3,
       });
         console.log("trashed "+id);
       } else {
@@ -201,6 +214,15 @@ class App extends Component {
         var url = "https://gear.githubapp.com/users/"
         return (
             <DragDropContext onDragEnd={this.onDragEnd}>
+            <div>
+              <p>Total not in JAMF: <b>{this.state.count}</b></p>
+              <hr></hr>
+              <p>Total in list 1: <b>{this.state.countList}</b></p>
+              <hr></hr>
+              <p>Total in list 2: <b>{this.state.countList2}</b></p>
+              <hr></hr>
+              <p>Total 📮: <b>{this.state.countEamiled}</b></p>
+            </div>
                 <Droppable droppableId="droppable">
                     {(provided, snapshot) => (
                         <div
@@ -248,7 +270,7 @@ class App extends Component {
                                                 snapshot.isDragging,
                                                 provided.draggableProps.style
                                             )}>
-                                            {item.serialNumber}
+                                            <a href={url+item.handle} target="_blank" rel="noopener noreferrer">{item.content}</a>
                                         </div>
                                     )}
                                 </Draggable>
