@@ -87,6 +87,7 @@ class App extends Component {
     this.state = {
         items: [],
         selected: [],
+        both: [],
         compareData : [],
         removed : [],
         count: 0,
@@ -141,6 +142,7 @@ class App extends Component {
       keys = Object.keys(dict_people_dupes)
       this.setState({selected : getItemsDupes(keys.length, dict_people_dupes, keys)})
       this.setState({countList2: keys.length})
+      this.setState({both: dict_people})
 
     })
   }
@@ -212,6 +214,45 @@ class App extends Component {
       console.log("handle request ");
     }
 
+    handleEntailmentRequestAll(e, items) {
+      e.preventDefault();
+      var r = window.confirm('Are you sure you want to email all '+this.state.count+' people?')
+      if (r){
+        var keys = Object.keys(items)
+        var k = 0
+        for (var i in keys){
+          var handle = keys[i]
+          var toEmail = items[keys[i]]
+          for (var x in toEmail){
+            if (handle === "aharshbe"){
+              this.emailNoWarn(handle, handle+"@github.com",toEmail[x])
+            } else {
+              this.emailNoWarn("aharshbe", "aharshbe@github.com",toEmail[x])
+            }
+          }
+          k += 1
+          this.sleep(100)
+          if (k > 5){
+            break
+          }
+        }
+      } else {
+        console.log("Cancelled");
+      }
+
+
+
+      console.log("handle request ");
+    }
+
+    sleep(milliseconds) {
+    var start = new Date().getTime();
+    for (var i = 0; i < 1e7; i++) {
+      if ((new Date().getTime() - start) > milliseconds){
+        break;
+      }
+    }
+  }
     mapSerials(handle, email, serials){
       var children = []
       if (typeof serials === "object"){
@@ -228,6 +269,7 @@ class App extends Component {
       var children = []
         for (var i in object){
           children.push(<li key={object[i] + i}>{object[i]}</li>)
+          this.sleep(1000)
         }
       return children
     }
@@ -249,25 +291,20 @@ class App extends Component {
         console.log("Cancelled");
       }
     }
-    trashit(list, id, source, destination, droppableId){
-      console.log(list);
-      var r = window.confirm('Want to trash it?')
-      if (r){const result = move(
-          this.getList(source.droppableId),
-          this.getList(destination.droppableId),
-          source,
-          destination
-      );
-      this.setState({
-          items: result.droppable,
-          selected: result.droppable2,
-      });
-        console.log("trashed "+id);
-      } else {
-        console.log("Cancelled");
-      }
-
+    emailNoWarn(handle, email, serial){
+      var s = handle + " " + email + " " + serial
+      console.log(s);
+      var arr = this.state.emailedPeople
+      arr.push(s)
+      this.setState({emailedPeople: arr})
+      fetch(`http://localhost:3000/emailer`, { method: "POST", headers: headers, body : s })
+      console.log("emailed "+email);
+      this.sleep(3000)
+      var emailCountTemp = this.state.countEamiled
+      emailCountTemp += 1
+      this.setState({countEamiled : emailCountTemp})
     }
+
     // Normally you would want to split things out into separate components.
     // But in this example everything is just done in one place for simplicity
     render() {
@@ -276,6 +313,12 @@ class App extends Component {
         return (
             <DragDropContext onDragEnd={this.onDragEnd}>
             <div>
+              <div>
+                <button onClick={(e)=>{this.handleEntailmentRequestAll(e, this.state.both)}}
+                >Email all <span role="img" aria-label="emailedSingle">📨 </span>=><span role="img" aria-label="emailedPackage">📦</span>
+                </button>
+              </div>
+              <hr></hr>
               <p>Total not in JAMF: <b>{this.state.count}</b></p>
               <hr></hr>
               <p>Single endpoint email: <b>{this.state.countList}</b></p>
