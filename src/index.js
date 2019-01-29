@@ -18,7 +18,7 @@ Array.from({ length: count }, (v, k) => k).map(k => ({
   email: `${data[k]}@github.com`,
   handle: data[k],
   serialNumbers: offset[data[k]],
-  emailed: false
+  emailed: "False"
 }));
 
 const getItemsDupes = (count, offset = 0, data, keys) =>
@@ -27,7 +27,8 @@ Array.from({ length: count }, (v, k) => k).map(k => ({
     content:`${data[k]}: ${offset[data[k]].length}`,
     email: `${data[k]}@github.com`,
     handle: data[k],
-    serialNumbers: offset[data[k]]
+    serialNumbers: offset[data[k]],
+    emailed: "False"
 }));
 
 
@@ -92,7 +93,8 @@ class App extends Component {
         countList: 0,
         countList2: 0,
         countEamiled: 0,
-        userMultipls: {}
+        userMultipls: {},
+        emailedPeople: []
     };
     let dataSent = []
     let len = 0
@@ -118,9 +120,6 @@ class App extends Component {
       var dict_people = {}
       var dict_people_sing = {}
       var dict_people_dupes = {}
-      var dict_object = {}
-      var arr = []
-      var number = 1
 
       keys.forEach(function(i){
         if (dataSent[i] in dict_people){
@@ -199,6 +198,7 @@ class App extends Component {
                 source,
                 destination
             );
+            this.getList(source.droppableId)[source.index].emailed = "True"
             this.setState({
                 items: result.droppable,
                 selected: result.droppable2,
@@ -214,7 +214,7 @@ class App extends Component {
 
     mapSerials(handle, email, serials){
       var children = []
-      if (typeof serials == "object"){
+      if (typeof serials === "object"){
         for (var i in serials){
           children.push(<li key={serials[i] + i}><button onClick={(e)=>{this.handleEntailmentRequest(e, handle, email, serials)}}>{serials[i]}</button></li>)
         }
@@ -224,12 +224,22 @@ class App extends Component {
       }
       return children
     }
+    mapEmailed(object){
+      var children = []
+        for (var i in object){
+          children.push(<li key={object[i] + i}>{object[i]}</li>)
+        }
+      return children
+    }
     email(handle, email, serial){
       console.log("Clicked email")
       var r = window.confirm('Want to email this person?')
       if (r){
         var s = handle + " " + email + " " + serial
         console.log(s);
+        var arr = this.state.emailedPeople
+        arr.push(s)
+        this.setState({emailedPeople: arr})
         fetch(`http://localhost:3000/emailer`, { method: "POST", headers: headers, body : s })
         console.log("emailed "+email);
         var emailCountTemp = this.state.countEamiled
@@ -272,7 +282,11 @@ class App extends Component {
               <hr></hr>
               <p>Multiple endpoint email: <b>{this.state.countList2}</b></p>
               <hr></hr>
-              <p>Total 📮: <b>{this.state.countEamiled}</b></p>
+              <p>Total <span role="img" aria-label="emailNumber">📮</span>: <b>{this.state.countEamiled}</b></p>
+              <hr></hr>
+              <div>Emailed People <span role="img" aria-label="emailedPeople">📩</span>:
+                <p>{this.mapEmailed(this.state.emailedPeople)}</p>
+              </div>
             </div>
                 <Droppable droppableId="droppable">
                     {(provided, snapshot) => (
@@ -296,7 +310,6 @@ class App extends Component {
                                             <a href={url+item.handle} target="_blank" rel="noopener noreferrer">{item.content}</a>
                                             <ul>
                                               {this.mapSerials(item.handle, item.email, item.serialNumbers)}
-                                              <p>Emailed: {item.emailed}</p>
                                             </ul>
                                         </div>
                                     )}
