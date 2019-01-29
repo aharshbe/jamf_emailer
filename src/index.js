@@ -12,22 +12,23 @@ headers.set('Authorization', 'Basic ' + Buffer.from(username + ":" + password).t
 
 
 const getItems = (count, offset = 0, data, keys) =>
-    Array.from({ length: count }, (v, k) => k).map(k => ({
-      id: `${data[k]}-${offset[data[k]]}`,
-      content: data[k],
-      email: `${data[k]}@github.com`,
-      handle: data[k],
-      serialNumbers: offset[data[k]]
-    }));
+Array.from({ length: count }, (v, k) => k).map(k => ({
+  id: `${data[k]}-${offset[data[k]]}`,
+  content: data[k],
+  email: `${data[k]}@github.com`,
+  handle: data[k],
+  serialNumbers: offset[data[k]],
+  emailed: false
+}));
 
 const getItemsDupes = (count, offset = 0, data, keys) =>
-        Array.from({ length: count }, (v, k) => k).map(k => ({
-            id: `${data[k]}-${offset[data[k]][0]}`,
-            content:`${data[k]}: ${offset[data[k]].length}`,
-            email: `${data[k]}@github.com`,
-            handle: data[k],
-            serialNumbers: offset[data[k]]
-        }));
+Array.from({ length: count }, (v, k) => k).map(k => ({
+    id: `${data[k]}-${offset[data[k]][0]}`,
+    content:`${data[k]}: ${offset[data[k]].length}`,
+    email: `${data[k]}@github.com`,
+    handle: data[k],
+    serialNumbers: offset[data[k]]
+}));
 
 
 
@@ -295,6 +296,7 @@ class App extends Component {
                                             <a href={url+item.handle} target="_blank" rel="noopener noreferrer">{item.content}</a>
                                             <ul>
                                               {this.mapSerials(item.handle, item.email, item.serialNumbers)}
+                                              <p>Emailed: {item.emailed}</p>
                                             </ul>
                                         </div>
                                     )}
