@@ -13,12 +13,21 @@ headers.set('Authorization', 'Basic ' + Buffer.from(username + ":" + password).t
 
 const getItems = (count, offset = 0, data, keys) =>
     Array.from({ length: count }, (v, k) => k).map(k => ({
-        id: `${offset[data[k]]}-${data[k]}`,
-        content: `${offset[data[k]]}:` + ` ${data[k]}`,
-        email: `${offset[data[k]]}@github.com`,
-        handle: offset[data[k]],
-        serialNumber: data[k]
+      id: `${data[k]}-${offset[data[k]]}`,
+      content: data[k],
+      email: `${data[k]}@github.com`,
+      handle: data[k],
+      serialNumbers: offset[data[k]]
     }));
+
+const getItemsDupes = (count, offset = 0, data, keys) =>
+        Array.from({ length: count }, (v, k) => k).map(k => ({
+            id: `${data[k]}-${offset[data[k]][0]}`,
+            content:`${data[k]}: ${offset[data[k]].length}`,
+            email: `${data[k]}@github.com`,
+            handle: data[k],
+            serialNumbers: offset[data[k]]
+        }));
 
 
 
@@ -79,10 +88,10 @@ class App extends Component {
         compareData : [],
         removed : [],
         count: 0,
-        countList: 127,
+        countList: 0,
         countList2: 0,
         countEamiled: 0,
-        userMultipls: []
+        userMultipls: {}
     };
     let dataSent = []
     let len = 0
@@ -104,10 +113,34 @@ class App extends Component {
       dataSent = resData["Total_Not_In_Jamf"][1]
       console.log(len);
       console.log(dataSent);
-
       keys = Object.keys(dataSent)
-      this.setState({items : getItems(len, dataSent, keys)})
+      var dict_people = {}
+      var dict_people_sing = {}
+      var dict_people_dupes = {}
+      var dict_object = {}
+      var arr = []
+      var number = 1
+
+      keys.forEach(function(i){
+        if (dataSent[i] in dict_people){
+          dict_people[dataSent[i]].push(i)
+          dict_people_dupes[dataSent[i]] = dict_people[dataSent[i]]
+          delete dict_people_sing[dataSent[i]]
+        } else {
+          dict_people[dataSent[i]] = [i]
+          dict_people_sing[dataSent[i]] = i
+        }
+      });
+
+      keys = Object.keys(dict_people_sing)
+      this.setState({items : getItems(keys.length, dict_people_sing, keys)})
       this.setState({count : len})
+      this.setState({userMultipls: dict_people})
+      this.setState({countList: keys.length})
+
+      keys = Object.keys(dict_people_dupes)
+      this.setState({selected : getItemsDupes(keys.length, dict_people_dupes, keys)})
+      this.setState({countList2: keys.length})
 
     })
   }
@@ -165,9 +198,6 @@ class App extends Component {
                 source,
                 destination
             );
-            this.email(this.getList(source.droppableId)[source.index].handle,
-            this.getList(source.droppableId)[source.index].email,
-            this.getList(source.droppableId)[source.index].serialNumber)
             this.setState({
                 items: result.droppable,
                 selected: result.droppable2,
@@ -175,7 +205,24 @@ class App extends Component {
         }
     };
 
+    handleEntailmentRequest(e, handle, email, serials) {
+      e.preventDefault();
+      this.email(handle, email, serials)
+      console.log("handle request ");
+    }
 
+    mapSerials(handle, email, serials){
+      var children = []
+      if (typeof serials == "object"){
+        for (var i in serials){
+          children.push(<li key={serials[i] + i}><button onClick={(e)=>{this.handleEntailmentRequest(e, handle, email, serials)}}>{serials[i]}</button></li>)
+        }
+      } else {
+        children.push(<p key={serials}><button onClick={(e)=>{this.handleEntailmentRequest(e, handle, email, serials)}}>{serials}</button></p>)
+        return children
+      }
+      return children
+    }
     email(handle, email, serial){
       console.log("Clicked email")
       var r = window.confirm('Want to email this person?')
@@ -214,14 +261,15 @@ class App extends Component {
     // But in this example everything is just done in one place for simplicity
     render() {
         var url = "https://gear.githubapp.com/users/"
+
         return (
             <DragDropContext onDragEnd={this.onDragEnd}>
             <div>
               <p>Total not in JAMF: <b>{this.state.count}</b></p>
               <hr></hr>
-              <p>Total in list 1: <b>{this.state.countList}</b></p>
+              <p>Single endpoint email: <b>{this.state.countList}</b></p>
               <hr></hr>
-              <p>Total in list 2: <b>{this.state.countList2}</b></p>
+              <p>Multiple endpoint email: <b>{this.state.countList2}</b></p>
               <hr></hr>
               <p>Total 📮: <b>{this.state.countEamiled}</b></p>
             </div>
@@ -245,6 +293,9 @@ class App extends Component {
                                                 provided.draggableProps.style
                                             )}>
                                             <a href={url+item.handle} target="_blank" rel="noopener noreferrer">{item.content}</a>
+                                            <ul>
+                                              {this.mapSerials(item.handle, item.email, item.serialNumbers)}
+                                            </ul>
                                         </div>
                                     )}
                                 </Draggable>
@@ -273,6 +324,9 @@ class App extends Component {
                                                 provided.draggableProps.style
                                             )}>
                                             <a href={url+item.handle} target="_blank" rel="noopener noreferrer">{item.content}</a>
+                                            <ul>
+                                              {this.mapSerials(item.handle, item.email, item.serialNumbers)}
+                                            </ul>
                                         </div>
                                     )}
                                 </Draggable>
