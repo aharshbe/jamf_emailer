@@ -5,7 +5,7 @@
 * Allows the user to:
 	* View users not enrolled in JAMF
 	* Distinguish between users with a single endpoint not enrolled and multiple
-  * Allows the user to email the given endpoint's owned via their GitHub email in the tool directly
+  * Allows the user to email the given endpoint's owner (the GitHub employee) via their GitHub email in the tool directly
   * Allows the user to email all endpoints that are non-compliant (use this feature with caution)
 
 ### Dependencies:
@@ -26,8 +26,9 @@
 ** To install all dependencies (apart from credentials) run `npm install` in `jamf_session_gh/jamf_gear_app` and `yarn install` in `emailer_jamf_tool`
 
 ### Usage:
-* Clone repo, e.g., `git clone Repo_URL`
-* open your terminal and `cd` into the cloned repo
+* Clone repo, i.e., `git clone https://github.com/aharshbe/jamf_session_web_app` to cone JAMF Session 🦃
+* Clone repo, i.e., `git clone https://github.com/aharshbe/jamf_emailer` to cone JAMF Emailer 📨
+* open your terminal and `cd` into each cloned repo
 * Request .env credentials from repo admins (see below)
 * Request server username and password from repo admins (see below)
 * type `node app.js` to start the server (node) in `jamf_session_gh/jamf_gear_app` for JAMF session server
