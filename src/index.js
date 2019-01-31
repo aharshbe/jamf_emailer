@@ -114,9 +114,7 @@ class App extends Component {
     .then(resData => {
 
 
-      //delete resData["Total_Not_In_Jamf"][1]["Total_Number_Not_In_Jamf"]
-      // test
-      resData["Total_Not_In_Jamf"][1]["Total_Number_Not_In_Jamf"] = "aharshbe"
+      delete resData["Total_Not_In_Jamf"][1]["Total_Number_Not_In_Jamf"]
       len = resData["Total_Not_In_Jamf"][0]
       dataSent = resData["Total_Not_In_Jamf"][1]
       console.log(len);
