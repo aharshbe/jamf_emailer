@@ -1,6 +1,6 @@
 # JAMF Session Emailer 📨
 ## Purpose
-* Supplementary tool for JAMF session to remediate endpoints not enrolled in JAMF
+* Supplementary tool for [JAMF session](https://github.com/aharshbe/jamf_session_web_app) to remediate endpoints not enrolled in JAMF
 
 * Allows the user to:
 	* View users not enrolled in JAMF
