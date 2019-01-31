@@ -36,4 +36,4 @@
 * Open internet browser to: `http://localhost:3001` to see the app running
 
 #### Authors:
-* [Austin Harshberger](https://github.com/aharshbe) => Node.js (server side)
+* [Austin Harshberger](https://github.com/aharshbe)
