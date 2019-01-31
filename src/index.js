@@ -7,10 +7,11 @@ require('dotenv').config()
 var username = process.env.REACT_APP_JAMF_SESSION_USER
 var password = process.env.REACT_APP_JAMF_SESSION_PASSWORD
 
+// Creates authed headers for post request
 let headers = new Headers();
 headers.set('Authorization', 'Basic ' + Buffer.from(username + ":" + password).toString('base64'));
 
-
+// Iterates over data from post request, and creates an array of dictionaries to return for the DnD views
 const getItems = (count, offset = 0, data, keys) =>
 Array.from({ length: count }, (v, k) => k).map(k => ({
   id: `${data[k]}-${offset[data[k]]}`,
@@ -21,6 +22,7 @@ Array.from({ length: count }, (v, k) => k).map(k => ({
   emailed: "False"
 }));
 
+// Iterates over data sent via post request checking for users with more than one computer not compliant
 const getItemsDupes = (count, offset = 0, data, keys) =>
 Array.from({ length: count }, (v, k) => k).map(k => ({
     id: `${data[k]}-${offset[data[k]][0]}`,
@@ -33,7 +35,7 @@ Array.from({ length: count }, (v, k) => k).map(k => ({
 
 
 
-// a little function to help us with reordering the result
+// Reorders resutls
 const reorder = (list, startIndex, endIndex) => {
     const result = Array.from(list);
     const [removed] = result.splice(startIndex, 1);
@@ -42,9 +44,8 @@ const reorder = (list, startIndex, endIndex) => {
     return result;
 };
 
-/**
- * Moves an item from one list to another list.
- */
+
+// Moves an item from one list to another list.
 const move = (source, destination, droppableSource, droppableDestination) => {
     const sourceClone = Array.from(source);
     const destClone = Array.from(destination);
@@ -59,8 +60,8 @@ const move = (source, destination, droppableSource, droppableDestination) => {
     return result;
 };
 
+// Styling for the grid of objects on the array
 const grid = 8
-
 const getItemStyle = (isDragging, draggableStyle) => ({
     // some basic styles to make the items look a bit nicer
     userSelect: 'none',
@@ -74,16 +75,18 @@ const getItemStyle = (isDragging, draggableStyle) => ({
     ...draggableStyle
 });
 
+// Styling for the grid based on action
 const getListStyle = isDraggingOver => ({
     background: isDraggingOver ? 'lightblue' : 'orange',
     padding: grid,
     width: 250
 });
 
-
+// Main app Component
 class App extends Component {
   constructor(){
     super();
+    // Creating state array of dictionaries
     this.state = {
         items: [],
         selected: [],
@@ -101,6 +104,7 @@ class App extends Component {
     let len = 0
     let keys = []
 
+    // Fetch request to obtain data from server (server must be live on 3000 to work)
     fetch("http://localhost:3000/compare",{
       method: "GET",
       headers: headers
@@ -134,6 +138,8 @@ class App extends Component {
       });
 
       keys = Object.keys(dict_people_sing)
+
+      // Set states and send data to function getItems and getItemsDupes
       this.setState({items : getItems(keys.length, dict_people_sing, keys)})
       this.setState({count : len})
       this.setState({userMultipls: dict_people})
@@ -159,11 +165,8 @@ class App extends Component {
     };
 
     getList = id => this.state[this.id2List[id]];
-
     onDragEnd = result => {
-
         const { source, destination } = result;
-
 
         // dropped outside the list
         if (!destination) {
@@ -179,14 +182,14 @@ class App extends Component {
                 destination.index
             );
             let state = { items };
-
             if (source.droppableId === 'droppable2') {
                 state = { selected: items };
             }
-
             this.setState(state);
         } else {
             console.log(source.droppableId);
+
+            // Get the count of items in each droppable object
             if (source.droppableId === "droppable"){
               this.setState({countList : this.getList(source.droppableId).length - 1})
               this.setState({countList2 : this.getList("droppable2").length + 1})
@@ -208,44 +211,41 @@ class App extends Component {
         }
     };
 
+    // Handle email request when button is clicked
     handleEntailmentRequest(e, handle, email, serials) {
       e.preventDefault();
       this.email(handle, email, serials)
       console.log("handle request ");
     }
 
+    // Handle email request when email all button is pressed
     handleEntailmentRequestAll(e, items) {
       e.preventDefault();
       var r = window.confirm('Are you sure you want to email all '+this.state.count+' people?')
       if (r){
         var keys = Object.keys(items)
-        var k = 0
+        var toSend = []
+        var s = ''
         for (var i in keys){
           var handle = keys[i]
           var toEmail = items[keys[i]]
+          var tmp = ""
           for (var x in toEmail){
-            if (handle === "aharshbe"){
-              this.emailNoWarn(handle, handle+"@github.com",toEmail[x])
-            } else {
-              this.emailNoWarn("aharshbe", "aharshbe@github.com",toEmail[x])
-            }
-          }
-          k += 1
-          this.sleep(100)
-          if (k > 5){
-            break
+             tmp = `${handle} ${handle}@github.com ${toEmail[x]}`
+             s += `${handle} ${handle}@github.com ${toEmail[x]}`
+             toSend.push(tmp)
+             tmp = ""
           }
         }
+        this.emailNoWarn(s, toSend)
       } else {
         console.log("Cancelled");
       }
-
-
-
       console.log("handle request ");
     }
 
-    sleep(milliseconds) {
+  // Sleep function not currently used but may be
+  sleep(milliseconds) {
     var start = new Date().getTime();
     for (var i = 0; i < 1e7; i++) {
       if ((new Date().getTime() - start) > milliseconds){
@@ -253,23 +253,24 @@ class App extends Component {
       }
     }
   }
-    mapSerials(handle, email, serials){
-      var children = []
-      if (typeof serials === "object"){
-        for (var i in serials){
-          children.push(<li key={serials[i] + i}><button onClick={(e)=>{this.handleEntailmentRequest(e, handle, email, serials)}}>{serials[i]}</button></li>)
-        }
-      } else {
-        children.push(<p key={serials}><button onClick={(e)=>{this.handleEntailmentRequest(e, handle, email, serials)}}>{serials}</button></p>)
-        return children
+  // Map serial numbers to create user clickable buttons
+  mapSerials(handle, email, serials){
+    var children = []
+    if (typeof serials === "object"){
+      for (var i in serials){
+        children.push(<li key={serials[i] + i}><button onClick={(e)=>{this.handleEntailmentRequest(e, handle, email, serials)}}>{serials[i]}</button></li>)
       }
+    } else {
+      children.push(<p key={serials}><button onClick={(e)=>{this.handleEntailmentRequest(e, handle, email, serials)}}>{serials}</button></p>)
       return children
     }
-    mapEmailed(object){
+    return children
+  }
+  // Create list of users that were previously emailed for tracking purposes
+  mapEmailed(object){
       var children = []
         for (var i in object){
           children.push(<li key={object[i] + i}>{object[i]}</li>)
-          this.sleep(1000)
         }
       return children
     }
@@ -291,25 +292,17 @@ class App extends Component {
         console.log("Cancelled");
       }
     }
-    emailNoWarn(handle, email, serial){
-      var s = handle + " " + email + " " + serial
-      console.log(s);
-      var arr = this.state.emailedPeople
-      arr.push(s)
-      this.setState({emailedPeople: arr})
-      fetch(`http://localhost:3000/emailer`, { method: "POST", headers: headers, body : s })
-      console.log("emailed "+email);
-      this.sleep(3000)
-      var emailCountTemp = this.state.countEamiled
-      emailCountTemp += 1
-      this.setState({countEamiled : emailCountTemp})
+    emailNoWarn(s, emails){
+      this.setState({emailedPeople: emails})
+      console.log(emails);
+      fetch(`http://localhost:3000/emailer_bulk`, { method: "POST", headers: headers, body : s })
+      this.setState({countEamiled : emails.length})
     }
 
-    // Normally you would want to split things out into separate components.
-    // But in this example everything is just done in one place for simplicity
+    // Render function to return HTML
     render() {
+      // Url to look up user handle via Gear (need interal apps access to get to Gear url)
         var url = "https://gear.githubapp.com/users/"
-
         return (
             <DragDropContext onDragEnd={this.onDragEnd}>
             <div>
